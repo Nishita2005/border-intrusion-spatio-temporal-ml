@@ -1,55 +1,49 @@
 import pandas as pd
 import numpy as np
-from datetime import datetime, timedelta
 import os
+import random
+from datetime import datetime, timedelta
 
-def create_movement_data(num_agents=15):
-    all_rows = []
+def generate_scientific_data(n_points=1000):
+    data = []
+    # Coordinates for the Rann of Kutch border area
+    base_lat, base_lon = 23.8, 69.5
     
-    for i in range(num_agents):
-        # Assign a unique ID to each "person"
-        agent_id = f"ID_{i:03d}"
+    # "Elite" Metadata Categories
+    object_types = ['Human', 'Animal', 'Vehicle', 'Drone']
+    terrains = ['Salt Flat', 'Marshy', 'Sandy']
+    visibilities = ['Clear', 'Foggy', 'Night']
+    
+    for i in range(n_points):
+        # 50/50 Split between Normal and Intruder
+        label = 1 if i > (n_points // 2) else 0 
+        lat = base_lat + random.uniform(-0.05, 0.05)
+        lon = base_lon + random.uniform(-0.05, 0.05)
         
-        # 30% of agents will be 'Suspicious' (Label 1), 70% 'Normal' (Label 0)
-        is_suspicious = np.random.random() < 0.3
-        label = 1 if is_suspicious else 0
-        
-        # Start everyone at a random spot near the "border" (Lon 70.0)
-        lat = np.random.uniform(24.0, 26.0)
-        lon = np.random.uniform(69.0, 69.5)
-        timestamp = datetime.now()
-        
-        for step in range(40): # Each person takes 40 "steps"
-            if is_suspicious:
-                # ZIG-ZAG: Random small moves in any direction
-                lat += np.random.uniform(-0.005, 0.005)
-                lon += np.random.uniform(-0.002, 0.010) # Generally moving toward border
-            else:
-                # PATROL: Steady, predictable straight line
-                lat += 0.002
-                lon += 0.0005
+        if label == 1: # Intruder Signature
+            speed = random.uniform(2.0, 8.0)
+            angle = random.uniform(45, 120)
+        else: # Patrol Signature
+            speed = random.uniform(3.0, 5.0)
+            angle = random.uniform(0, 15)
             
-            all_rows.append({
-                "agent_id": agent_id,
-                "timestamp": timestamp + timedelta(minutes=step * 5),
-                "latitude": lat,
-                "longitude": lon,
-                "label": label
-            })
-            
-    return pd.DataFrame(all_rows)
+        data.append({
+            'timestamp': (datetime.now() + timedelta(seconds=i)).isoformat(),
+            'latitude': lat,
+            'longitude': lon,
+            'speed': speed,
+            'angle_change': angle,
+            'object_type': random.choice(object_types),
+            'terrain': random.choice(terrains),
+            'visibility': random.choice(visibilities),
+            'sensor_confidence': round(random.uniform(0.85, 0.99), 2),
+            'label': label
+        })
 
-# --- MAIN EXECUTION ---
-if __name__ == "__main__":
-    # 1. Create the data
-    df = create_movement_data(20)
-    
-    # 2. Ensure the data/raw directory exists
+    df = pd.DataFrame(data)
     os.makedirs('data/raw', exist_ok=True)
-    
-    # 3. Save it to a CSV file
-    file_path = "data/raw/synthetic_border_data.csv"
-    df.to_csv(file_path, index=False)
-    
-    print(f"Success! Generated {len(df)} rows of movement data.")
-    print(f"File saved at: {file_path}")
+    df.to_csv('data/raw/border_data.csv', index=False)
+    print("✅ Step 1 Complete: Elite Scientific Dataset Created!")
+
+if __name__ == "__main__":
+    generate_scientific_data()
