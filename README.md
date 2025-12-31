@@ -1,5 +1,7 @@
 # Border Intrusion Pattern Analysis using Spatio-Temporal Machine Learning
 
+[![CI](https://github.com/Nishita2005/border-intrusion-spatio-temporal-ml/actions/workflows/ci.yml/badge.svg)](https://github.com/Nishita2005/border-intrusion-spatio-temporal-ml/actions/workflows/ci.yml)
+
 ## Problem Statement
 Border surveillance systems generate large volumes of movement data from sensors,
 patrol logs, and monitoring infrastructure. Manual monitoring is inefficient and
@@ -65,3 +67,30 @@ Project initialization and data design phase.
 ## Author
 Student project for learning applied spatio-temporal machine learning.
 
+## Development
+
+Quick starter for contributors:
+
+1. Create a virtual environment and install runtime + dev deps:
+
+```bash
+python -m venv .venv
+source .venv/bin/activate   # on Windows: .venv\Scripts\activate
+pip install -r requirements.txt
+pip install -r dev-requirements.txt
+```
+
+2. Install pre-commit hooks and run them once:
+
+```bash
+pre-commit install
+pre-commit run --all-files
+```
+
+3. Run the tests:
+
+```bash
+pytest -q
+```
+
+CI badge: after pushing the repo to GitHub the workflow will appear at `.github/workflows/ci.yml`.

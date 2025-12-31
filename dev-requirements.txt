@@ -1,0 +1,6 @@
+# Keep tooling versions compatible with current PyPI
+black==24.3.0
+flake8==6.0.0
+isort==5.13.2
+pre-commit==3.4.0
+# pytest is already pinned in requirements.txt
