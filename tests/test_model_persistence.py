@@ -1,8 +1,10 @@
-import pandas as pd
 from pathlib import Path
-from src.train_model import train_elite_model
-from src import config
+
 import joblib
+import pandas as pd
+
+from src import config
+from src.train_model import train_elite_model
 
 
 def test_model_pipeline_persistence(tmp_path):

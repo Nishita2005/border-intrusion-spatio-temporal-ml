@@ -1,6 +1,7 @@
 from pathlib import Path
-from src.generate_data import generate_scientific_data
+
 from src import config
+from src.generate_data import generate_scientific_data
 
 
 def test_generate_writes_file(tmp_path):

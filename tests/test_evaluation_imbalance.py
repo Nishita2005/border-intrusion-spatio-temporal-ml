@@ -1,4 +1,3 @@
-import pandas as pd
 from src.metrics import compute_classification_metrics
 
 

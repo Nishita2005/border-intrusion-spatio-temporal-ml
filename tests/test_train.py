@@ -1,7 +1,9 @@
 from pathlib import Path
+
 import pandas as pd
-from src.train_model import train_elite_model
+
 from src import config
+from src.train_model import train_elite_model
 
 
 def test_train_creates_model(tmp_path):

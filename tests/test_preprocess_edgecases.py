@@ -1,10 +1,11 @@
 import pandas as pd
 import pytest
+
 from src.preprocess_data import calculate_features
 
 
 def test_calculate_features_empty():
-    df = pd.DataFrame(columns=["agent_id", "timestamp", "latitude", "longitude"]) 
+    df = pd.DataFrame(columns=["agent_id", "timestamp", "latitude", "longitude"])
     out = calculate_features(df)
     # Should return DataFrame with expected columns even if empty
     assert "dist_moved_m" in out.columns
