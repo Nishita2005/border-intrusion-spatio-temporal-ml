@@ -11,18 +11,18 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Set up Python
-        uses: actions/setup-python@v4
+      - name: Set up Mamba (conda-forge)
+        uses: conda-incubator/setup-miniconda@v3
         with:
+          miniforge-variant: Mambaforge
+          miniforge-version: latest
+          activate-environment: bisml
           python-version: '3.11'
-      - name: Install OS dependencies
+          use-mamba: true
+      - name: Install dependencies via conda-forge
+        shell: bash -l {0}
         run: |
-          sudo apt-get update
-          sudo apt-get install -y gdal-bin libgdal-dev libproj-dev build-essential
-      - name: Install dependencies
-        run: |
-          python -m pip install --upgrade pip setuptools wheel
-          pip install -r requirements.txt
+          mamba install -c conda-forge geopandas pandas scikit-learn folium joblib pytest -y
           pip install -r dev-requirements.txt
       - name: Format check (Black) and lint (Flake8)
         run: |
