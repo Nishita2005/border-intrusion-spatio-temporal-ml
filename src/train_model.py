@@ -10,6 +10,7 @@ from sklearn.pipeline import Pipeline
 from sklearn.preprocessing import OneHotEncoder, StandardScaler
 from sklearn.model_selection import train_test_split, cross_val_score # Added cross_val_score
 
+
 import config
 
 def train_elite_model():
@@ -76,41 +77,64 @@ def train_elite_model():
     # --------------------------------------------------
     # 7. NEW: Feature Importance
     # --------------------------------------------------
-    # 1. Get the trained model from the pipeline
     rf_model = pipeline.named_steps['classifier']
-    
-    # 2. Get feature names after OneHotEncoding
-    # We combine the numeric names with the new categorical names
     cat_encoder = pipeline.named_steps['preprocessor'].transformers_[1][1]
     encoded_cat_names = cat_encoder.get_feature_names_out(categorical_features)
     all_feature_names = numeric_features + list(encoded_cat_names)
 
-    # 3. Create importance series and sort
     importances = rf_model.feature_importances_
     feat_importances = pd.Series(importances, index=all_feature_names).sort_values(ascending=True)
 
-    # 4. Plot
     plt.figure(figsize=(10, 6))
     feat_importances.plot(kind='barh', color='skyblue')
     plt.title("Critical Features for Intrusion Detection")
-    plt.xlabel("Relative Importance Score")
-    
-    # Save to visuals folder
-    importance_path = Path("visuals/feature_importance.png")
     plt.tight_layout()
-    plt.savefig(importance_path)
+    plt.savefig("visuals/feature_importance.png")
     plt.close()
-    print(f"Feature importance plot saved to: {importance_path}")
 
-    # 8. Visualization & Save (Logic remains the same)
+    # --------------------------------------------------
+    # 8. Evaluation & Confusion Matrix
+    # --------------------------------------------------
     y_pred = pipeline.predict(X_test)
+    y_proba = pipeline.predict_proba(X_test)[:, 1]  # Get probability for class 1 (Intrusion)
+    
+    print(f"\n--- Final Results ---")
+    print(f"Train Accuracy : {pipeline.score(X_train, y_train):.3f}")
+    print(f"Test Accuracy  : {pipeline.score(X_test, y_test):.3f}")
+
+    plt.figure(figsize=(8, 6))
     cm = confusion_matrix(y_test, y_pred)
     disp = ConfusionMatrixDisplay(confusion_matrix=cm, display_labels=pipeline.classes_)
     disp.plot(cmap=plt.cm.Blues)
     plt.savefig("visuals/confusion_matrix.png")
-    
+    plt.close()
+
+    # --------------------------------------------------
+    # 9. Threat Score + Decision Intelligence
+    # --------------------------------------------------
+    decision_df = X_test.copy()
+    decision_df["true_label"] = y_test.values
+    decision_df["predicted_label"] = y_pred
+    decision_df["threat_score"] = y_proba
+
+    # Confidence-weighted decision logic
+    decision_df["decision"] = np.where(
+        decision_df["threat_score"] > 0.7, "HIGH_RISK",
+        np.where(decision_df["threat_score"] > 0.4, "MEDIUM_RISK", "LOW_RISK")
+    )
+
+    # Save outputs
+    output_dir = Path("outputs")
+    output_dir.mkdir(exist_ok=True)
+    decision_output_path = output_dir / "decision_output.csv"
+    decision_df.to_csv(decision_output_path, index=False)
+    print(f"Decision intelligence output saved to: {decision_output_path}")
+
+    # --------------------------------------------------
+    # 10. Save model
+    # --------------------------------------------------
     joblib.dump(pipeline, config.model_path())
-    print(f"Model saved successfully.")
+    print(f"Model saved successfully to: {config.model_path()}")
 
 if __name__ == "__main__":
     train_elite_model()
