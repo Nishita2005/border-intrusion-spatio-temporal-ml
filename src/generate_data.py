@@ -9,7 +9,7 @@ import config
 
 def generate_scientific_data(n_points=1200):
     """
-    DAY 5: HARD NEGATIVE SAMPLES
+     HARD NEGATIVE SAMPLES
     - Some patrols behave like intruders
     - Some intruders behave stealthily
     - Forces model to learn CONTEXT, not shortcuts
