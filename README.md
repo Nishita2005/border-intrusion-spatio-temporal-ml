@@ -1,96 +1,56 @@
-# Border Intrusion Pattern Analysis using Spatio-Temporal Machine Learning
+🛡️ BorderShield: 
+Spatio-Temporal Intrusion Analysis BorderShield is an AI-powered surveillance framework designed to transform raw movement data into actionable intelligence. By leveraging spatio-temporal machine learning, the system identifies suspicious patterns, reconstructs trajectories, and quantifies risk in real-time.
 
-[![CI](https://github.com/Nishita2005/border-intrusion-spatio-temporal-ml/actions/workflows/ci.yml/badge.svg)](https://github.com/Nishita2005/border-intrusion-spatio-temporal-ml/actions/workflows/ci.yml)
+Project Overview
+ Manual border monitoring is reactive and prone to fatigue. BorderShield automates the detection of anomalies by analyzing the "physics of movement." The system doesn't just see where an object is; it understands how it is moving to predict intent.
 
-## Problem Statement
-Border surveillance systems generate large volumes of movement data from sensors,
-patrol logs, and monitoring infrastructure. Manual monitoring is inefficient and
-reactive. This project aims to analyze spatio-temporal movement data to identify
-potentially suspicious patterns and high-risk regions along border areas.
+Core Capabilities:-
+ Dynamic Threat Classification: Real-time categorization of movement using Random Forest classifiers. 
+ Trajectory Reconstruction: Visualizes "breadcrumb" paths to identify loitering, direct approach, or evasive maneuvers. 
+ Tactical Telemetry: Instant calculation of velocity (m/s) and angular deviation (degrees). 
+ Explainable AI (XAI): Uses SHAP to explain why a specific target was flagged as a high-risk threat.
 
-## Objectives
-- Analyze spatial and temporal movement patterns
-- Classify movement behavior as normal or potentially suspicious
-- Identify high-risk border zones and time windows
-- Generate risk scores to support early warning and prioritization
+Technical Architecture
+ Tactical Decision Logic
+The system employs a multi-stage heuristic and ML pipeline to flag threats:
+Velocity Threshold: Targets exceeding 10.0(m/s) are flagged for rapid response. 
+Evasive Maneuver Logic: Sudden angular changes > 60 degrees trigger "Evasive" alerts (indicative of path-finding or patrol avoidance). 
+Spatio-Temporal Features: Features include distance_to_border, acceleration, and bearing_drift.
 
-## Project Scope
-- Uses simulated and publicly available datasets
-- Does not rely on classified or sensitive data
-- Focuses on pattern analysis and anomaly detection
-- Emphasizes ethical and responsible ML usage
+Tech Stack Layer
+Technology Frontend/UI- Streamlit, Folium
+Data Processing- GeoPandas, NumPy, Pandas
+Machine Learning- Scikit-Learn (Random Forest), SHAP 
+Visualization- Matplotlib, Seaborn 
+DevOps- Pytest, Pre-commit, GitHub Actions
 
-## Tech Stack
-- Python
-- Pandas, NumPy
-- Scikit-learn
-- GeoPandas
-- Matplotlib, Seaborn
-- Folium
-- Streamlit / Flask (for visualization)
+Getting Started Prerequisites
+ Python 3.9+ ,Virtual Environment (recommended) Installation
 
-## Project Structure
-data/ - raw and processed datasets
-notebooks/ - exploration and analysis notebooks
-src/ - core Python scripts
-models/ - trained models
-visuals/ - plots and maps
-docs/ - project documentation
+Clone & Setup
+Bashgit clone https://github.com/Nishita2005/border-intrusion-analysis.git cd border-intrusion-analysis python -m venv .venv source .venv/bin/activate # Windows: .venv\Scripts\activate
 
-## Current Operational Features
-- **Dynamic Threat Classification**: Real-time classification of objects based on spacio-temporal movement patterns.
-- **Click-to-Analyze Synchronization**: Interactive map interface where clicking a target instantly synchronizes the tactical sidebar with precise telemetry.
-- **Trajectory Reconstruction**: Visualizes the unique historical "breadcrumb" path of a selected ID to identify movement intent.
-- **Tactical Telemetry Dashboard**: High-precision metrics for Speed (m/s) and Angle Change (°) to assist in human-in-the-loop decision making.
-- **Intelligence Log & Reporting**: Automated generation of threat summaries and downloadable CSV history for forensic mission debriefing.
+Install Dependencies
+ Bashpip install -r requirements.txt pip install -r dev-requirements.txt
+Initialize Environment Bashpre-commit install pytest -q
 
-## Tactical Decision Logic
-The system classifies threats based on verified physical motion thresholds:
-- **High Velocity Alert**: Triggered when a target exceeds **10.0 m/s**.
-- **Evasive Maneuver Alert**: Triggered by an angular change exceeding **60.0°**.
+Roadmap & Evolution
+Phase 1: Core ML Engine & Static Visualization.
+Phase 2: Interactive Tactical Dashboard (Streamlit Integration). 
+Phase 3: Multi-Sensor Fusion (Simulated Radar & Acoustic data). 
+Phase 4: Predictive Intercept Modeling (Vector-based future-positioning). 
+Phase 5: Dynamic Geofencing (Sector-based risk weighting).
 
-## Tech Stack
-- **Frontend**: Streamlit
-- **Mapping**: Folium / Streamlit-Folium
-- **ML Engine**: Scikit-Learn (Random Forest Classifier)
-- **Explainability**: SHAP (SHapley Additive exPlanations)
+Project Structure
+ ├── data/ # Simulated & Public datasets
+ ├── docs/ # Technical specs & documentation 
+ ├── models/ # Serialized (.pkl) ML models 
+ ├── notebooks/ # EDA & Model Prototyping 
+ ├── src/ # Core logic (Feature Eng, Threat Logic) 
+ ├── visuals/ # Exported tactical maps & plots 
+ └── tests/ # Unit tests for telemetry logic
 
-## Roadmap (In-Development)
-- **Multi-Sensor Data Fusion**: Integrating simulated Radar, Thermal, and Acoustic sensor inputs.
-- **Predictive Intercept Point**: project target's future location based on current vector analysis.
-- **Dynamic Geofencing**: Automated risk-profiling for high-priority border sectors.
-
-
-## Current Status
-Project initialization and data design phase.
-
-## Author
-Student project for learning applied spatio-temporal machine learning.
-
-## Development
-
-Quick starter for contributors:
-
-1. Create a virtual environment and install runtime + dev deps:
-
-```bash
-python -m venv .venv
-source .venv/bin/activate   # on Windows: .venv\Scripts\activate
-pip install -r requirements.txt
-pip install -r dev-requirements.txt
-```
-
-2. Install pre-commit hooks and run them once:
-
-```bash
-pre-commit install
-pre-commit run --all-files
-```
-
-3. Run the tests:
-
-```bash
-pytest -q
-```
-
-CI badge: after pushing the repo to GitHub the workflow will appear at `.github/workflows/ci.yml`.
+Ethical Usage
+ This project is developed for educational purposes using simulated and public datasets. It adheres to ethical AI principles, emphasizing transparency (via SHAP) and human-in-the-loop decision-making. No sensitive or classified data is utilized.
+ Author: [Nishita Pandey/Nishita2005]
+ Student Project - Applied Spatio-Temporal ML
