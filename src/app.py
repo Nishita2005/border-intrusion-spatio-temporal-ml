@@ -2,244 +2,203 @@ import streamlit as st
 import pandas as pd
 import numpy as np
 import folium
+import joblib
+from pathlib import Path
 from folium.plugins import HeatMap
 from streamlit_folium import st_folium
 
 # =========================
+# 1. LOAD YOUR TRAINED ML BRAIN
+# =========================
+@st.cache_resource
+def get_model():
+    # Load the pipeline we just fixed and pushed to Git
+    return joblib.load("models/border_intruder_model.pkl")
+
+pipeline = get_model()
+
+# =========================
 # PAGE CONFIG
 # =========================
-st.set_page_config(
-    page_title="Spacio-Temporal Command Center",
-    layout="wide"
-)
+st.set_page_config(page_title="Elite Border Command", layout="wide", page_icon="🛡️")
 
-st.title("🛡️ Spacio-Temporal Command Center")
-st.markdown("---")
+# Custom CSS for a "Tactical" look
+st.markdown("""
+    <style>
+    .main { background-color: #0e1117; color: #ffffff; }
+    .stMetric { background-color: #1e2130; padding: 15px; border-radius: 10px; border: 1px solid #3e4451; }
+    </style>
+    """, unsafe_allow_html=True)
 
-# =========================
-# SIDEBAR CONTROLS
-# =========================
-st.sidebar.header("🧭 Tactical Controls")
-
-timeline_step = st.sidebar.slider(
-    "Timeline Step",
-    min_value=10,
-    max_value=1000,
-    value=600
-)
-
-map_style = st.sidebar.selectbox(
-    "🛰️ Map Style",
-    ["Dark Tactical", "Satellite"]
-)
-
-show_heatmap = st.sidebar.checkbox(" Show Threat Heatmap", True)
-show_predictions = st.sidebar.checkbox(" Show Predicted Path", True)
-
-st.sidebar.markdown("---")
-st.sidebar.subheader("🗺️ Map Legend")
-
-st.sidebar.markdown("""
-🔴 **High Threat Object**  
-🟢 **Selected Track**  
-⚪ **Predicted Path (Future)**  
-🟠 **Restricted Zone**  
-🔥 **Threat Density Heatmap**  
-📡 **Track ID = Unique Object**
-""")
+st.title(" Spacio-Temporal Border Command Center")
+st.caption("AI-Powered Intrusion Detection & Tactical Analytics")
 
 # =========================
-# DATA GENERATION
+# 2. DATA GENERATION (Simulating Real Sensors)
 # =========================
-np.random.seed(7)
-
-def generate_data(n=1000):
-    lat = 23.8 + np.cumsum(np.random.randn(n) * 0.001)
-    lon = 68.7 + np.cumsum(np.random.randn(n) * 0.001)
-
-    return pd.DataFrame({
-        "track_id": np.random.randint(1000, 9999, size=n),
-        "lat": lat,
-        "lon": lon,
-        "speed": np.abs(np.random.randn(n) * 2 + 5),
-        "object_type": np.random.choice(
-            ["Drone", "Human", "Animal"], n, p=[0.45, 0.35, 0.2]
-        ),
-        "behavior": np.random.choice(
-            ["Normal", "Evasive", "Suspicious"], n, p=[0.4, 0.4, 0.2]
-        ),
-        "threat_score": np.random.rand(n)
+def generate_tactical_data(n=50):
+    # Simulating a specific border coordinate (e.g., Kutch region)
+    base_lat, base_lon = 23.8, 68.7
+    lats = base_lat + np.random.uniform(-0.1, 0.1, n)
+    lons = base_lon + np.random.uniform(-0.1, 0.1, n)
+    
+    data = pd.DataFrame({
+        "track_id": range(1000, 1000 + n),
+        "lat": lats,
+        "lon": lons,
+        "speed": np.random.uniform(2, 45, n),
+        "angle_change": np.random.uniform(0, 180, n),
+        "sensor_confidence": np.random.uniform(0.7, 1.0, n),
+        "object_type": np.random.choice(["Drone", "Human", "Animal", "Vehicle"], n),
+        "terrain": np.random.choice(["Plain", "Marshy", "Mountain"], n),
+        "visibility": np.random.choice(["Clear", "Foggy", "Night"], n)
     })
+    
+    
+    probs = pipeline.predict_proba(data)[:, 1] 
+    data["threat_score"] = probs
+    data["is_intruder"] = pipeline.predict(data)
+    
+    return data
 
-df = generate_data()
-step = min(timeline_step, len(df) - 1)
-df_step = df.iloc[:step]
-
-# =========================
-# TRACK SELECTION
-# =========================
-st.sidebar.subheader(" Object Selection")
-
-selected_track = st.sidebar.selectbox(
-    "Select Track ID",
-    sorted(df_step.track_id.unique())
-)
-
-track_df = df_step[df_step.track_id == selected_track]
+if 'df' not in st.session_state:
+    st.session_state.df = generate_tactical_data()
 
 # =========================
-# RESTRICTED ZONE (DATA-ANCHORED)
+# 4. SIDEBAR CONTROLS
 # =========================
-zone_lat = df_step.lat.mean() + 0.05
-zone_lon = df_step.lon.mean() + 0.05
-zone_radius_km = 3
-
+st.sidebar.header("Tactical Filters")
+min_threat = st.sidebar.slider("Threat Filter Threshold", 0.0, 1.0, 0.5)
+map_style = st.sidebar.selectbox(" Satellite View", ["Dark Tactical", "Satellite"])
+if st.sidebar.button("Refresh Sensor Feed"):
+    st.session_state.df = generate_tactical_data()
+    st.rerun()
 # =========================
-# ALERT ENGINE
+# 4.5 APPLY FILTERS 
 # =========================
-alerts = []
-
-if (track_df.threat_score > 0.85).any():
-    alerts.append(" HIGH THREAT OBJECT DETECTED")
-
-for _, r in track_df.iterrows():
-    dist = np.sqrt((r.lat - zone_lat)**2 + (r.lon - zone_lon)**2) * 111
-    if dist <= zone_radius_km:
-        alerts.append(" RESTRICTED ZONE BREACH")
-        break
-
-if alerts:
-    for a in set(alerts):
-        st.error(a)
-else:
-    st.success("✅ No active threats")
-
+# This creates the variable 'filtered_df' that the map needs!
+df = st.session_state.df
+filtered_df = df[df['threat_score'] >= min_threat]
 # =========================
-# MAP SETUP
 # =========================
-st.markdown("##  Live Border Surveillance Map")
+# 3. TOP TIER METRICS (Filtered)
+# =========================
+# Use filtered_df instead of df so the numbers change with the slider!
+display_df = filtered_df 
 
+intruders_count = display_df[display_df['is_intruder'] == 1].shape[0]
+avg_threat = display_df['threat_score'].mean() if not display_df.empty else 0
+
+m1, m2, m3, m4 = st.columns(4)
+m1.metric("Active Tracks (Filtered)", len(display_df))
+m2.metric("Detected Intruders", intruders_count)
+m3.metric("Avg Threat Level", f"{avg_threat:.2%}")
+m4.metric("System Status", "ALERTS ACTIVE" if intruders_count > 0 else "SECURE")
+
+
+# 5. THE MAP (Decision Intelligence)
+# =========================
+st.subheader("Live Border Surveillance Map")
+
+# A. Define the Border & Warning Zone Coordinates
+# These are simulated to cross through your sensor data range (23.8, 68.7)
+border_line = [
+    [23.75, 68.6], [23.80, 68.75], [23.85, 68.85], [23.90, 68.95]
+]
+# Offset the warning zone slightly to the left/bottom of the border
+warning_zone = [[p[0]-0.008, p[1]-0.008] for p in border_line]
+
+# B. Initialize Map
 tiles = "CartoDB dark_matter" if map_style == "Dark Tactical" else "Esri.WorldImagery"
+m = folium.Map(location=[23.8, 68.7], zoom_start=11, tiles=tiles)
 
-m = folium.Map(
-    location=[df_step.lat.mean(), df_step.lon.mean()],
-    zoom_start=9,
-    tiles=tiles
-)
-
-# =========================
-# RESTRICTED ZONE
-# =========================
-folium.Circle(
-    location=[zone_lat, zone_lon],
-    radius=zone_radius_km * 1000,
-    color="orange",
-    fill=True,
-    fill_opacity=0.12,
-    popup="Restricted Zone"
+# C. Draw the Visual Barriers (The Geofences)
+# The Warning Zone (Yellow)
+folium.PolyLine(
+    locations=warning_zone,
+    color="#FFFF00",
+    weight=4,
+    opacity=0.3,
+    tooltip="Warning Zone: Entry Detected"
 ).add_to(m)
 
-# =========================
-# PLOT ALL OBJECTS (DOTS)
-# =========================
-for _, row in df_step.iterrows():
-    color = "green" if row.track_id == selected_track else (
-        "red" if row.threat_score > 0.8 else "gray"
-    )
+# The Main Border (Red)
+folium.PolyLine(
+    locations=border_line,
+    color="#FF4B4B",
+    weight=6,
+    opacity=0.9,
+    dash_array='10, 10',
+    tooltip="International Border (RESTRICTED)"
+).add_to(m)
 
+# D. Draw the Threat Heatmap
+if not filtered_df.empty:
+    # Only show heatmap for scores > 0.7 to keep it "clean"
+    heat_data = filtered_df[filtered_df['threat_score'] > 0.7][['lat', 'lon']].values.tolist()
+    if heat_data:
+        HeatMap(heat_data, radius=15, blur=18, min_opacity=0.4).add_to(m)
+
+# E. Plot Every Track (The Dots)
+for _, row in filtered_df.iterrows():
+    # Use Neon colors for high visibility on dark maps
+    color = "#FF0000" if row['is_intruder'] == 1 else "#00FF00"
+    
     folium.CircleMarker(
         location=[row.lat, row.lon],
-        radius=5 if row.track_id == selected_track else 3,
+        radius=7,
         color=color,
         fill=True,
-        fill_opacity=0.85,
+        fill_opacity=0.8,
         popup=f"""
         <b>Track ID:</b> {row.track_id}<br>
         <b>Type:</b> {row.object_type}<br>
-        <b>Speed:</b> {row.speed:.2f}<br>
-        <b>Behavior:</b> {row.behavior}<br>
-        <b>Threat:</b> {row.threat_score:.2f}
+        <b>Threat Score:</b> {row.threat_score:.2f}<br>
+        <b>Status:</b> {'⚠️ INTRUDER' if row['is_intruder'] == 1 else '✅ NORMAL'}
         """
     ).add_to(m)
 
-# =========================
-# SELECTED OBJECT HISTORY
-# =========================
-history_coords = list(zip(track_df.lat, track_df.lon))
+# F. THE TACTICAL LEGEND (Floating HTML Overlay)
+legend_html = '''
+     <div style="position: fixed; 
+     bottom: 50px; left: 50px; width: 200px; height: 170px; 
+     background-color: rgba(14, 17, 23, 0.9); z-index:9999; font-size:14px;
+     color: white; border:1px solid #3e4451; border-radius:8px; padding: 12px;
+     font-family: sans-serif;">
+     <b style="color:#FF4B4B">Tactical Legend</b><br>
+     <hr style="margin: 5px 0; border-color: #3e4451;">
+     <span style="color:#FF4B4B"><b>--</b></span> Border Line<br>
+     <span style="color:#FFFF00"><b>--</b></span> Warning Zone<br>
+     <span style="color:#FF0000">●</span> Intruder (Confirmed)<br>
+     <span style="color:#00FF00">●</span> Normal Activity<br>
+     <span style="color:orange">🔥</span> Threat Density
+     </div>
+     '''
+m.get_root().html.add_child(folium.Element(legend_html))
 
-folium.PolyLine(
-    locations=history_coords,
-    color="cyan",
-    weight=4,
-    tooltip=f"History | Track {selected_track}"
-).add_to(m)
+# G. Render in Streamlit
+st_folium(m, height=550, use_container_width=True)
 
-# =========================
-# SELECTED OBJECT PREDICTION
-# =========================
-if show_predictions and len(track_df) >= 3:
-    last_points = track_df.tail(3)
+# ==========================================
+# 6. FEATURE IMPORTANCE (Explainable AI)
+# ==========================================
 
-    lat_step = last_points.lat.diff().mean()
-    lon_step = last_points.lon.diff().mean()
+col_left, col_right = st.columns([1, 1]) 
 
-    future_coords = []
-    lat, lon = last_points.iloc[-1][["lat", "lon"]]
+with col_left:
+    st.subheader(" Why is this a Threat?")
+    # Use the pipeline to show what features matter most
+    rf_model = pipeline.named_steps['classifier']
+    imp_df = pd.DataFrame({
+        "Feature": ["Speed", "Angle", "Confidence"],
+        "Importance": rf_model.feature_importances_[:3] 
+    }).sort_values("Importance", ascending=False)
+    st.bar_chart(imp_df.set_index("Feature"))
 
-    for _ in range(5):
-        lat += lat_step
-        lon += lon_step
-        future_coords.append((lat, lon))
-
-    folium.PolyLine(
-        locations=future_coords,
-        color="white",
-        dash_array="5,5",
-        weight=3,
-        tooltip="Predicted Path"
-    ).add_to(m)
-
-# =========================
-# HEATMAP
-# =========================
-if show_heatmap:
-    heat_data = df_step[df_step.threat_score > 0.6][["lat", "lon"]].values.tolist()
-    HeatMap(heat_data, radius=25).add_to(m)
-
-# =========================
-# RENDER MAP
-# =========================
-st_folium(m, height=650, use_container_width=True)
-
-# =========================
-# INTEL TABLE
-# =========================
-st.markdown("##  Active Threat Intelligence Log")
-
-intel = track_df.sort_values("threat_score", ascending=False).head(6)[
-    ["track_id", "object_type", "speed", "behavior", "threat_score"]
-]
-
-st.dataframe(intel, use_container_width=True)
-
-# =========================
-# SHAP / ML EXPLAINABILITY
-# =========================
-st.markdown("##  Threat Explainability (SHAP-style)")
-
-shap_df = pd.DataFrame({
-    "Feature": ["Speed", "Zone Proximity", "Behavior", "Object Type"],
-    "Impact": [0.35, 0.42, 0.15, 0.08]
-})
-
-st.bar_chart(shap_df.set_index("Feature"))
-
-st.info(
-    "Model explanation: Zone proximity and speed contribute most to threat score."
-)
-
-# =========================
-# FOOTER
-# =========================
-st.markdown("---")
-st.caption("🔒 Secure Tactical Analytics | Defence-Grade Spacio-Temporal Intelligence")
+with col_right:
+    st.subheader("Top Priority Threats")
+    # Show the actual data table for the intruders
+    st.dataframe(
+        filtered_df[filtered_df['is_intruder'] == 1].sort_values("threat_score", ascending=False),
+        use_container_width=True
+    )
