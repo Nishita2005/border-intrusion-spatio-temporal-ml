@@ -1,4 +1,5 @@
-🛡️ BorderShield: Spatio-Temporal Intrusion AnalysisBorderShield is an AI-powered surveillance framework designed to transform raw movement data into actionable intelligence. 
+🛡️ BorderShield: Spatio-Temporal Intrusion Analysis
+BorderShield is an AI-powered surveillance framework designed to transform raw movement data into actionable intelligence. 
 By leveraging spatio-temporal machine learning, the system identifies suspicious patterns, reconstructs trajectories, and quantifies risk in real-time.
 
 Project Overview 
