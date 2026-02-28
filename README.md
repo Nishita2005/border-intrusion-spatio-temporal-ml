@@ -1,8 +1,7 @@
-🛡️ BorderShield: 
-Spatio-Temporal Intrusion Analysis BorderShield is an AI-powered surveillance framework designed to transform raw movement data into actionable intelligence. By leveraging spatio-temporal machine learning, the system identifies suspicious patterns, reconstructs trajectories, and quantifies risk in real-time.
+Spatio-Temporal AI-Based Border Intrusion Detection and Predictive Tracking System is an AI-powered surveillance framework designed to transform raw movement data into actionable intelligence. By leveraging spatio-temporal machine learning, the system identifies suspicious patterns, reconstructs trajectories, and quantifies risk in real-time.
 
 Project Overview
- Manual border monitoring is reactive and prone to fatigue. BorderShield automates the detection of anomalies by analyzing the "physics of movement." The system doesn't just see where an object is; it understands how it is moving to predict intent.
+Manual border monitoring is reactive and prone to fatigue. BorderShield automates the detection of anomalies by analyzing the "physics of movement." The system doesn't just see where an object is; it understands how it is moving to predict intent.
 
 Core Capabilities:-
  Dynamic Threat Classification: Real-time categorization of movement using Random Forest classifiers. 
@@ -11,11 +10,19 @@ Core Capabilities:-
  Explainable AI (XAI): Uses SHAP to explain why a specific target was flagged as a high-risk threat.
 
 Technical Architecture
- Tactical Decision Logic
+Tactical Decision Logic
 The system employs a multi-stage heuristic and ML pipeline to flag threats:
 Velocity Threshold: Targets exceeding 10.0(m/s) are flagged for rapid response. 
 Evasive Maneuver Logic: Sudden angular changes > 60 degrees trigger "Evasive" alerts (indicative of path-finding or patrol avoidance). 
 Spatio-Temporal Features: Features include distance_to_border, acceleration, and bearing_drift.
+
+Results
+Performance Metrics:
+•	Detection Accuracy: 80 %
+•	Precision: 76.87%
+•	Recall: 85.83 %
+•	F1-Score: 81.10 %
+•	Confusion Matrix Analysis performed
 
 Tech Stack Layer
 Technology Frontend/UI- Streamlit, Folium
